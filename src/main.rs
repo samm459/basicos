@@ -4,6 +4,8 @@
 #![test_runner(crate::test::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
+use core::panic::PanicInfo;
+
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
@@ -29,8 +31,6 @@ macro_rules! println_out {
 ($fmt:expr, $($arg:tt)*) => ($crate::print_out!(
     concat!($fmt, "\n"), $($arg)*));
 }
-
-use core::panic::PanicInfo;
 
 mod vga_buffer {
     use core::fmt;
@@ -153,13 +153,17 @@ mod vga_buffer {
         WRITER.lock().write_fmt(args).unwrap();
     }
 
-    #[test_case]
-    fn test_println_output() {
-        let s = "Some test string that fits on a single line";
-        println!("{}", s);
-        for (i, c) in s.chars().enumerate() {
-            let screen_char = WRITER.lock().buffer.chars[0][i].read();
-            assert_eq!(char::from(screen_char.ascii_character), c);
+    mod tests {
+        use super::*;
+
+        #[test_case]
+        fn it_can_println() {
+            let s = "Some test string that fits on a single line";
+            println!("{}", s);
+            for (i, c) in s.chars().enumerate() {
+                let screen_char = WRITER.lock().buffer.chars[0][i].read();
+                assert_eq!(char::from(screen_char.ascii_character), c);
+            }
         }
     }
 }
